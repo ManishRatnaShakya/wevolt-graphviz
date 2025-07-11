@@ -22,7 +22,6 @@ const App = () => {
       <h2>Graphviz DOT Graph</h2>
       <GraphvizRenderer dot={jsonToDot(sitesList)} />
 
-      <h3>Available Sites</h3>
       {sitesList?.length > 0 ? (
         <ul>
           {sitesList.map((site) => (

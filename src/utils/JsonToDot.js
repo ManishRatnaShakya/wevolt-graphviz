@@ -1,3 +1,5 @@
+import { SitesList } from "../services/sites.services";
+
 export function jsonToDot(data) {
   const meters = data.Meters || [];
   const chargers = data.Chargers || [];
@@ -5,7 +7,12 @@ export function jsonToDot(data) {
   const connectors = data.Connectors || [];
 
   const siteName = sites.length > 0 ? sites[0].name : "Unnamed Site";
-  const wifiIcon = "📶";
+  const wifiIcon = "🛜";
+  const electricity =  "⚡️";
+  const charger = "🔌";
+  const onlineIcon = "🟢";
+  const offlineIcon = "🔴";
+  
   let dot = `digraph G {
   // Vertical ports: top (L1-L3) and bottom (L1-L3)
   graph [
@@ -31,6 +38,7 @@ export function jsonToDot(data) {
   edge [
     arrowhead=none,
     arrowtail= none,
+    label=${electricity}
     dir=both,
     color="#555555",
     penwidth=1.5,
@@ -38,58 +46,101 @@ export function jsonToDot(data) {
   ];
 
   // Site label
-  site [shape=plaintext, label=<<B>🏢 ${siteName}</B>>];
+  site [shape=plaintext, label=
+  <
+ <TABLE BORDER="1" STYLE= "ROUNDED" CELLPADDING= "10" CELLBORDER="1" CELLSPACING="10" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE">
+      <TR> <TD COLSPAN="3"> ${siteName}</TD></TR>
+      ${sites[0]?.phaseType === 1 ?  `
+         <TR>
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="n1">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+						<TR>
+							<TD BORDER="0">N1</TD>
+						</TR>
+          </TABLE>
+        </TD></TR>`: `
+      <TR>
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="n1">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+						<TR>
+							<TD BORDER="0">N1</TD>
+						</TR>
+          </TABLE>
+        </TD>
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="n2">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+						<TR>
+							<TD BORDER="0">N2</TD>
+						</TR>
+          </TABLE>
+        </TD>
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="n3">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+						<TR>
+							<TD BORDER="0">N3</TD>
+						</TR>
+          </TABLE>
+          </TD>
+          </TR>
+      `}
+      </TABLE>
+  >];
 `;
+
+  const mainMeter = meters.find(m => m.meter_id === "main-meter");
+  for(let i=1; i<=sites[0]?.phaseType; i++) {
+    dot+= `site:n${i} -> "meter_${mainMeter.meter_id}":top_l${i};`;
+  }
 
   // Render meters with top and bottom ports
   meters.forEach(m => {
     const id = ``;
-    const status = m.meter_status === "OFFLINE" ? "Offline" : "Online";
+    const status = m.meter_status === "OFFLINE"; 
     dot += ` "meter_${m.meter_id}" [label=<
     <TABLE BORDER="1" STYLE= "ROUNDED" CELLPADDING= "10" CELLBORDER="1" CELLSPACING="10" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE">
       <TR>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l1">
-        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l1" BGCOLOR="BLUE">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1" BGCOLOR="WHITE">
 						<TR>
 							<TD BORDER="0">L1</TD>
 						</TR>
           </TABLE>
         </TD>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l2">
-        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l2" BGCOLOR="GRAY">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1" BGCOLOR="WHITE">
 						<TR>
 							<TD BORDER="0">L2</TD>
 						</TR>
           </TABLE>
         </TD>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l3">
-        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="top_l3" BGCOLOR="GRAY">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1" BGCOLOR="WHITE">
 						<TR>
 							<TD BORDER="0">L3</TD>
 						</TR>
           </TABLE></TD>
       </TR>
       <TR>
-        <TD BORDER="0" COLSPAN="3"><B>${wifiIcon} ${status} ${m.meter_id}</B></TD>
+        <TD BORDER="0" COLSPAN="3"><B>${status? wifiIcon: `Online`} ${m.meter_id}</B></TD>
       </TR>
       <TR>
         <TD BORDER="0" COLSPAN="3"><B> ${m.max_capacity }VWh</B></TD>
       </TR>
       <TR>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l1">
-        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l1" BGCOLOR="GREEN">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1"  BGCOLOR="WHITE">
 						<TR>
 							<TD BORDER="0">L1</TD>
 						</TR>
           </TABLE>
         </TD>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l2"><TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l2" BGCOLOR="GRAY"><TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1" BGCOLOR="WHITE" >
 						<TR>
 							<TD BORDER="0">L2</TD>
 						</TR>
           </TABLE></TD>
-        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l3">
-        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1">
+        <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_l3" BGCOLOR="GRAY">
+        <TABLE CELLPADDING="0" BORDER="1" STYLE="ROUNDED" CELLSPACING="1" BGCOLOR="WHITE">
 						<TR>
 							<TD BORDER="0">L3</TD>
 						</TR>
@@ -103,7 +154,7 @@ export function jsonToDot(data) {
   // Render chargers with top and bottom ports
   chargers.forEach(ch => {
     const id = `"charger_${ch.chargerId}"`;
-    const status = ch.isConnected ? 'Connected' : 'Disconnected';
+    const status = ch.isConnected ? onlineIcon : offlineIcon;
     const phases = ch.phaseAssignment.split('_').map(p => p.toLowerCase());
     dot += `  ${id} [label=<
     <TABLE BORDER="1" STYLE= "ROUNDED" CELLPADDING= "10" CELLBORDER="1" CELLSPACING="10">
@@ -131,7 +182,7 @@ export function jsonToDot(data) {
           </TD>
       </TR>
       <TR>
-        <TD BORDER="0" COLSPAN="3"><B>${wifiIcon} ${status} ${ch.chargerId}</B></TD>
+        <TD BORDER="0" COLSPAN="3"><B>${charger} ${ch.chargerId}  ${status}</B></TD>
       </TR>
       <TR>
         <TD STYLE="ROUNDED" HEIGHT="0" WIDTH="0" FIXEDSIZE="TRUE" PORT="bot_AC">
@@ -254,6 +305,6 @@ export function jsonToDot(data) {
   });
 
   dot += `}`;
-  // console.log(dot)
+  console.log(dot)
   return dot;
 }
