@@ -20,7 +20,9 @@ const App = () => {
   return (
     <div>
       <h2>Graphviz DOT Graph</h2>
-      <GraphvizRenderer dot={jsonToDot(sitesList)} />
+      <div style= {{height: '100%'}}>
+        <GraphvizRenderer dot={jsonToDot(sitesList)} />
+      </div>
 
       {sitesList?.length > 0 ? (
         <ul>

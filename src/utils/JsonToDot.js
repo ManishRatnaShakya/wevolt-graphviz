@@ -23,15 +23,18 @@ export function jsonToDot(data) {
     bgcolor=white,
     rankdir=TB,
     nodesep=1.0,
-    ranksep=1.0
+    ranksep=1.0,
+    size="10,10!",   
+    ratio=fill,  
+    
   ];
-
   node [
     shape=plaintext, 
     style="rounded",
     fontname="Helvetica",
     fontsize=12,
     margin=0.1,
+
     penwidth=2
   ];
 
